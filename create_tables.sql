@@ -1,65 +1,64 @@
-create table Patients(
-	hospitalid int,
-    PatientID int primary key,
-    PatientName varchar(100),
-    MedicalNotes varchar(100),
-    Phone varchar(20)
-);
-create table Doctors(
-	hospitalid int,
-    DoctorID int primary key,
-    DoctorName varchar(100),
-    Phone varchar(20),
-    Room int,
-    Speciality varchar(100)
+create table Hospitals(
+    hospitalID int primary key,
+    maxQuantity int,
+    rating decimal(3,2)
 );
 create table Diagnosis (
-    DiagnosID int primary key,
-    Diagnos varchar(100),
-    Description varchar(100)
+    diagnosID int primary key,
+    diagnos varchar(100),
+    description varchar(100)
     );
-create table Appointments (
-    AppointmentID int primary key,
-    PatientID int,
-    DoctorID int,
-    DiagnosID int,
-    Date date
-);
-create table Procedure(
-    ProcedureID int primary key,
-    Description varchar(100),
-    AppointmentID int,
-    Room int,
-    Price int
-);
 create table Locations(
-    hospitalid int primary key,
+    hospitalID int primary key references Hospitals(hospitalID),
     city varchar(100),
     address varchar(100)
 );
-create table Hospitals(
-    id int primary key,
-    max_quantity int,
-    rating decimal
-);
 create table Finance(
-    hospitalid int primary key,
-    income int, --- suma procedure---
-    avg_income int
+    hospitalID int primary key references Hospitals(hospitalID),
+    income int default 0, --- suma procedure---
+    avgIncome int default 0
+);
+create table Patients(
+	hospitalID int references Hospitals(hospitalID),
+    patientID int primary key,
+    patientName varchar(100),
+    phone varchar(20)
+);
+create table Doctors(
+	doctorID int primary key,
+	hospitalID int references Hospitals(hospitalID),
+    doctorName varchar(100),
+    phone varchar(20),
+    room int,
+    speciality varchar(100)
+);
+create table Appointments (
+    appointmentID int primary key,
+    patientID int references Patients(patientID),
+    doctorID int references Doctors(doctorID),
+    diagnosID int references Diagnosis(diagnosID),
+    appointmentDate date
+);
+create table Procedure(
+    procedureID int primary key,
+    description varchar(100),
+    appointmentID int references Appointments(appointmentID),
+    room int,
+    price int
 );
 create table Pharmacy(
-	id int primary key,
-    hospitalid int,
-    id int primary key,
-    allowed boolean default true,
-    Price int,
+	medicineID int primary key,
+    hospitalID int references Hospitals(hospitalID),
+    medicineName varchar(100),
+    medicineAllowed boolean default true,
+    price int,
     quantity int
 );
 create table Admin(
-	item_id int primary key,
-    hospitalid int,
-    item_name varchar(100),
+	itemID int primary key,
+    hospitalID int references Hospitals(hospitalID),
+    itemName varchar(100),
     allowed boolean default true,
-    Price int,
+    price int,
     quantity int
 );
