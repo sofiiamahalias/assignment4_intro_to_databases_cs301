@@ -70,6 +70,31 @@ create table Admin(
                       quantity int
 );
 
+--Створення процедури для заповнення двох колонок таблиці
+create or replace procedure update_finance() --використано процедуру для коректного заповнення прибутку лікарень (при зміні даних можна викликати процедуру та значення оновляться)
+language plpgsql
+as $$
+begin
+update Finance f --оновлюємо необхідну таблицю
+set income=( --для кожного рядка встановлюємо прибуток:
+    select coalesce(sum(pr.price),0) --обчислюємо суму вартості всіх процедур (якщо їх немає, для уникання null використовуємо coalesce і додаємо 0)
+    from Procedures pr --оскільки немає прямого зв'язку між лікарнею та процедурою, робимо два join через проміжні таблиці
+             join Appointments a on pr.appointmentID=a.appointmentID --кожна процедура пов'язана з прийомом
+             join Doctors d on a.doctorID=d.doctorID --прийом пов'язаний з лікарем (в лікаря є ID лікарні)
+    where d.hospitalID=f.hospitalID
+);
+update Finance f
+set avgIncome=(
+    select coalesce(f.income/nullif(count(*),0),0) --використовуємо nullif щоб уникнути ділення на 0 (якщо немає пацієнтів, буде в клітинці null без помилки ділення на нуль, але coalesce замінить це на 0)
+    from Patients p --з цієї таблиці отримуємо пацієнтів поточної лікарні та через count(*) рахуємо кількість пацієнтів лікарні
+    where p.hospitalID=f.hospitalID
+);
+end;
+$$;
+call update_finance(); --виклик процедури
 
---Create indexes
-create index if not exists idx on ...; --TODO
+--Створення індексів для оптимізації
+create index if not exists idx_procedures_appointment on Procedures(appointmentID); --створюємо індекси на колонки, які використовуються в join для оптимізації
+create index if not exists idx_appointments_doctor on Appointments(doctorID);
+create index if not exists idx_doctors_hospital on Doctors(hospitalID);
+
