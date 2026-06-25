@@ -1,323 +1,321 @@
-﻿#код для генерування таблиць створений ШІ
+﻿#скрипт згенерований ШІ
 import random
-from datetime import date, timedelta
+from datetime import date,timedelta
 
 import psycopg2
 from psycopg2.extras import execute_batch
 from faker import Faker
 
-fake = Faker()
+fake=Faker()
 
-host = "localhost"
-port = "5432"
-database = "Ass4"
-user = "postgres"
-password = "54321"
+host="localhost"
+port="5432"
+database="assignment4"
+user="postgres"
+password="54321"
 
-batch_size = 10000
-
+batch_size=5000
 
 def create_connection():
-    return psycopg2.connect(
-        host=host,
-        port=port,
-        dbname=database,
-        user=user,
-        password=password
-    )
+return psycopg2.connect(
+host=host,
+port=port,
+dbname=database,
+user=user,
+password=password
+)
 
+def insert_batch(connection,query,data):
+with connection.cursor() as cur:
+execute_batch(cur,query,data,page_size=1000)
+connection.commit()
 
-def insert_batch(connection, query, data):
-    with connection.cursor() as cursor:
-        execute_batch(cursor, query, data, page_size=1000)
-    connection.commit()
+def generate_hospitals(conn):
+q="""
+insert into hospitals
+(hospitalid,maxquantity,rating)
+values (%s,%s,%s)
+"""
+data=[]
+for i in range(1,101):
+data.append((
+i,
+random.randint(50,5000),
+round(random.uniform(1,5),2)
+))
+insert_batch(conn,q,data)
 
+def generate_locations(conn):
+q="""
+insert into locations
+(hospitalid,city,address)
+values (%s,%s,%s)
+"""
+data=[]
+for i in range(1,101):
+data.append((
+i,
+fake.city(),
+fake.street_address()
+))
+insert_batch(conn,q,data)
 
-def generate_hospitals(connection):
-    query = """
-    insert into hospitals
-    (hospitalid, maxquantity, rating)
-    values (%s, %s, %s)
-    on conflict do nothing
-    """
-    data = []
-    for hospital_id in range(1, 101):
+def generate_finance(conn):
+q="""
+insert into finance
+(hospitalid)
+values (%s)
+"""
+data=[(i,) for i in range(1,101)]
+insert_batch(conn,q,data)
+
+def generate_diagnosis(conn):
+diagnoses=[
+("Influenza","Viral respiratory infection"),
+("COVID-19","Coronavirus infection"),
+("Diabetes","Blood sugar disorder"),
+("Asthma","Chronic airway inflammation"),
+("Hypertension","High blood pressure"),
+("Migraine","Severe recurring headache"),
+("Fracture","Broken bone"),
+("Pneumonia","Lung infection"),
+("Bronchitis","Inflamed bronchial tubes"),
+("Appendicitis","Inflamed appendix"),
+("Gastritis","Stomach lining inflammation"),
+("Arthritis","Joint inflammation"),
+("Allergy","Immune system reaction"),
+("Otitis","Ear infection"),
+("Dermatitis","Skin inflammation"),
+("Anemia","Low red blood cells"),
+("Depression","Mood disorder"),
+("Epilepsy","Neurological seizure disorder"),
+("Kidney Stones","Mineral deposits in kidneys"),
+("Heart Failure","Reduced heart function")
+]
+
+```
+q="""
+insert into diagnosis
+(diagnosid,diagnos,description)
+values (%s,%s,%s)
+"""
+
+data=[]
+for i,item in enumerate(diagnoses,start=1):
+    data.append((i,item[0],item[1]))
+
+insert_batch(conn,q,data)
+```
+
+def generate_doctors(conn):
+q="""
+insert into doctors
+(doctorid,hospitalid,doctorname,phone,room,speciality)
+values (%s,%s,%s,%s,%s,%s)
+"""
+
+```
+specialities=[
+    "Cardiologist",
+    "Neurologist",
+    "Therapist",
+    "Pediatrician",
+    "Surgeon",
+    "Dermatologist",
+    "Orthopedist",
+    "Otolaryngologist",
+    "Endocrinologist",
+    "Pulmonologist"
+]
+
+for start in range(1,10001,batch_size):
+    data=[]
+    end=min(start+batch_size,10001)
+
+    for i in range(start,end):
         data.append((
-            hospital_id,
-            random.randint(100, 3000),
-            round(random.uniform(1, 5), 2)
+            i,
+            random.randint(1,100),
+            fake.name(),
+            fake.phone_number()[:20],
+            random.randint(100,999),
+            random.choice(specialities)
         ))
-    insert_batch(connection, query, data)
 
+    insert_batch(conn,q,data)
+    print(f"doctors: {end-1}")
+```
 
-def generate_locations(connection):
-    query = """
-    insert into locations
-    (hospitalid, city, address)
-    values (%s, %s, %s)
-    on conflict do nothing
-    """
-    data = []
-    for hospital_id in range(1, 101):
+def generate_patients(conn):
+q="""
+insert into patients
+(hospitalid,patientid,patientname,phone)
+values (%s,%s,%s,%s)
+"""
+
+```
+for start in range(1,500001,batch_size):
+    data=[]
+    end=min(start+batch_size,500001)
+
+    for i in range(start,end):
         data.append((
-            hospital_id,
-            fake.city(),
-            fake.street_address()
+            random.randint(1,100),
+            i,
+            fake.name(),
+            fake.phone_number()[:20]
         ))
-    insert_batch(connection, query, data)
 
+    insert_batch(conn,q,data)
+    print(f"patients: {end-1}")
+```
 
-def generate_finance(connection):
-    query = """
-    insert into finance
-    (hospitalid, income, avgincome)
-    values (%s, %s, %s)
-    on conflict do nothing
-    """
-    data = []
-    for hospital_id in range(1, 101):
-        income = random.randint(500000, 10000000)
+def generate_appointments(conn):
+q="""
+insert into appointments
+(appointmentid,patientid,doctorid,diagnosid,appointmentdate)
+values (%s,%s,%s,%s,%s)
+"""
+
+```
+start_date=date(2022,1,1)
+
+for start in range(1,500001,batch_size):
+    data=[]
+    end=min(start+batch_size,500001)
+
+    for i in range(start,end):
         data.append((
-            hospital_id,
-            income,
-            income // 12
+            i,
+            random.randint(1,500000),
+            random.randint(1,10000),
+            random.randint(1,20),
+            start_date+timedelta(days=random.randint(0,1460))
         ))
-    insert_batch(connection, query, data)
 
+    insert_batch(conn,q,data)
+    print(f"appointments: {end-1}")
+```
 
-def generate_diagnosis(connection):
-    diagnoses = [
-        ("flu", "influenza"),
-        ("covid", "coronavirus"),
-        ("diabetes", "sugar disease"),
-        ("asthma", "breathing disorder"),
-        ("fracture", "bone injury"),
-        ("migraine", "head pain"),
-        ("hypertension", "high blood pressure"),
-        ("allergy", "immune reaction")
-    ]
+def generate_procedures(conn):
+q="""
+insert into procedures
+(procedureid,appointmentid,room,price)
+values (%s,%s,%s,%s)
+"""
 
-    query = """
-    insert into diagnosis
-    (diagnosid, diagnos, description)
-    values (%s, %s, %s)
-    on conflict do nothing
-    """
+```
+for start in range(1,500001,batch_size):
+    data=[]
+    end=min(start+batch_size,500001)
 
-    data = []
+    for i in range(start,end):
+        data.append((
+            i,
+            i,
+            random.randint(100,999),
+            random.randint(5,10000)
+        ))
 
-    for i, item in enumerate(diagnoses, start=1):
-        data.append((i, item[0], item[1]))
+    insert_batch(conn,q,data)
+    print(f"procedures: {end-1}")
+```
 
-    insert_batch(connection, query, data)
+def generate_pharmacy(conn):
+q="""
+insert into pharmacy
+(medicineid,hospitalid,medicinename,medicineallowed,price,quantity)
+values (%s,%s,%s,%s,%s,%s)
+"""
 
+```
+medicines=[
+    "Paracetamol",
+    "Ibuprofen",
+    "Aspirin",
+    "Amoxicillin",
+    "Vitamin C",
+    "Metformin",
+    "Omeprazole",
+    "Cetirizine",
+    "Insulin",
+    "Diclofenac"
+]
 
-def generate_doctors(connection):
-    query = """
-    insert into doctors
-    (doctorid, hospitalid, doctorname, phone, room, speciality)
-    values (%s, %s, %s, %s, %s, %s)
-    on conflict do nothing
-    """
+for start in range(1,100001,batch_size):
+    data=[]
+    end=min(start+batch_size,100001)
 
-    specialities = [
-        "cardiologist",
-        "dentist",
-        "neurologist",
-        "surgeon",
-        "therapist",
-        "pediatrician"
-    ]
+    for i in range(start,end):
+        data.append((
+            i,
+            random.randint(1,100),
+            random.choice(medicines),
+            random.choice(["A","F"]),
+            random.randint(10,5000),
+            random.randint(0,1000)
+        ))
 
-    total = 10000
+    insert_batch(conn,q,data)
+    print(f"pharmacy: {end-1}")
+```
 
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
+def generate_admin(conn):
+q="""
+insert into admin
+(itemid,hospitalid,itemname,price,quantity)
+values (%s,%s,%s,%s,%s)
+"""
 
-        for doctor_id in range(start, end):
-            data.append((
-                doctor_id,
-                random.randint(1, 100),
-                fake.name(),
-                fake.phone_number()[:20],
-                random.randint(100, 999),
-                random.choice(specialities)
-            ))
+```
+items=[
+    "Chair",
+    "Table",
+    "Computer",
+    "Printer",
+    "Bed",
+    "Lamp",
+    "Monitor",
+    "Wheelchair",
+    "Cabinet",
+    "Defibrillator",
+    "Oxygen Tank",
+    "Stretcher"
+]
 
-        insert_batch(connection, query, data)
-        print(f"doctors: {end - 1}/{total}")
+for start in range(1,100001,batch_size):
+    data=[]
+    end=min(start+batch_size,100001)
 
+    for i in range(start,end):
+        data.append((
+            i,
+            random.randint(1,100),
+            random.choice(items),
+            random.randint(50,5000),
+            random.randint(1,100)
+        ))
 
-def generate_patients(connection):
-    query = """
-    insert into patients
-    (hospitalid, patientid, patientname, phone)
-    values (%s, %s, %s, %s)
-    on conflict do nothing
-    """
+    insert_batch(conn,q,data)
+    print(f"admin: {end-1}")
+```
 
-    total = 500000
+if **name**=="**main**":
+conn=create_connection()
 
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
+```
+generate_hospitals(conn)
+generate_locations(conn)
+generate_finance(conn)
+generate_diagnosis(conn)
+generate_doctors(conn)
+generate_patients(conn)
+generate_appointments(conn)
+generate_procedures(conn)
+generate_pharmacy(conn)
+generate_admin(conn)
 
-        for patient_id in range(start, end):
-            data.append((
-                random.randint(1, 100),
-                patient_id,
-                fake.name(),
-                fake.phone_number()[:20]
-            ))
+conn.close()
 
-        insert_batch(connection, query, data)
-        print(f"patients: {end - 1}/{total}")
-
-
-def generate_appointments(connection):
-    query = """
-    insert into appointments
-    (appointmentid, patientid, doctorid, diagnosid, appointmentdate)
-    values (%s, %s, %s, %s, %s)
-    on conflict do nothing
-    """
-
-    total = 500000
-    start_date = date(2022, 1, 1)
-
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
-
-        for appointment_id in range(start, end):
-            data.append((
-                appointment_id,
-                random.randint(1, 500000),
-                random.randint(1, 10000),
-                random.randint(1, 8),
-                start_date + timedelta(days=random.randint(0, 1460))
-            ))
-
-        insert_batch(connection, query, data)
-        print(f"appointments: {end - 1}/{total}")
-
-
-def generate_procedures(connection):
-    query = """
-    insert into procedures
-    (procedureid, description, appointmentid, room, price)
-    values (%s, %s, %s, %s, %s)
-    on conflict do nothing
-    """
-
-    total = 500000
-
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
-
-        for procedure_id in range(start, end):
-            data.append((
-                procedure_id,
-                fake.sentence(nb_words=4),
-                procedure_id,
-                random.randint(100, 999),
-                random.randint(100, 10000)
-            ))
-
-        insert_batch(connection, query, data)
-        print(f"procedures: {end - 1}/{total}")
-
-
-def generate_pharmacy(connection):
-    query = """
-    insert into pharmacy
-    (medicineid, hospitalid, medicinename, medicineallowed, price, quantity)
-    values (%s, %s, %s, %s, %s, %s)
-    on conflict do nothing
-    """
-
-    medicines = [
-        "paracetamol",
-        "ibuprofen",
-        "aspirin",
-        "amoxicillin",
-        "vitamin c"
-    ]
-
-    total = 100000
-
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
-
-        for medicine_id in range(start, end):
-            data.append((
-                medicine_id,
-                random.randint(1, 100),
-                random.choice(medicines),
-                random.choice([True, False]),
-                random.randint(10, 1000),
-                random.randint(0, 500)
-            ))
-
-        insert_batch(connection, query, data)
-        print(f"pharmacy: {end - 1}/{total}")
-
-
-def generate_admin(connection):
-    query = """
-    insert into admin
-    (itemid, hospitalid, itemname, allowed, price, quantity)
-    values (%s, %s, %s, %s, %s, %s)
-    on conflict do nothing
-    """
-
-    items = [
-        "chair",
-        "table",
-        "computer",
-        "printer",
-        "bed",
-        "lamp"
-    ]
-
-    total = 100000
-
-    for start in range(1, total + 1, batch_size):
-        data = []
-        end = min(start + batch_size, total + 1)
-
-        for item_id in range(start, end):
-            data.append((
-                item_id,
-                random.randint(1, 100),
-                random.choice(items),
-                random.choice([True, False]),
-                random.randint(50, 5000),
-                random.randint(1, 100)
-            ))
-
-        insert_batch(connection, query, data)
-        print(f"admin: {end - 1}/{total}")
-
-
-if __name__ == "__main__":
-    connection = create_connection()
-
-    generate_hospitals(connection)
-    generate_locations(connection)
-    generate_finance(connection)
-    generate_diagnosis(connection)
-    generate_doctors(connection)
-    generate_patients(connection)
-    generate_appointments(connection)
-    generate_procedures(connection)
-    generate_pharmacy(connection)
-    generate_admin(connection)
-
-    connection.close()
-
-    print("done")
+print("done")
 
