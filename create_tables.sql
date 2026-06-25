@@ -1,74 +1,96 @@
-create table Hospitals(
-                          hospitalID int primary key,
-                          maxQuantity int,
-                          rating decimal(3,2)
+create table Hospitals( --Таблиця всіх лікарень--
+                          hospitalID int primary key, --Первинний ключ ID лікарні--
+                          maxQuantity int not null, --Максимальна місткість пацієнтів--
+                          rating decimal(3,2),
+                          constraint chk_hospital_maxQuantity check(maxQuantity>0), --Обмеження містткість від 0--
+                          constraint chk_hospital_rating check (rating>=0.0 and rating<=5.0) --Обмеження рейтинг від 0.0 до 5.0--
 );
 
-create table Diagnosis (
-                           diagnosID int primary key,
-                           diagnos varchar(100),
-                           description varchar(100)
+create table Diagnosis (--таблиця з діагнозами--
+                           diagnosID int primary key, --Первинний ключ по діагноз ID--
+                           diagnos varchar(100) not null,
+                           description varchar(100) --Опис хвороби--
 );
 
-create table Locations(
-                          hospitalID int primary key references Hospitals(hospitalID),
-                          city varchar(100),
-                          address varchar(100)
+create table Locations(--Таблиця з усіма локаціями лікарень--
+                          hospitalID int primary key references Hospitals(hospitalID), --ID лікарні тут зв'язок 1:1--
+                          city varchar(100) not null, --Місто не нуль--
+                          address varchar(100) not null,
+                          constraint locations_address unique (address)--Обмеження, що адреси унікальні--
 );
 
-create table Finance(
-                        hospitalID int primary key references Hospitals(hospitalID),
-                        income int default 0, --- suma procedure---
-                        avgIncome int default 0
+create table Finance(--Таблиця з фінансами по лікарням--
+                        hospitalID int primary key references Hospitals(hospitalID), -- Ідентифікатор лікарні зв'язок 1:1--
+                        income int default 0, --Прибуток лікарні початково 0--
+                        avgIncome int default 0, --Середній прибуток - загальний/кількість пацієнтів--
+                        constraint chk_finance_income check (income>=0), --Обмеження прибуток більший рівний нулю--
+                        constraint chk_finance_avgIncome check (avgIncome>=0)
 );
 
-create table Patients(
-                         hospitalID int references Hospitals(hospitalID),
-                         patientID int primary key,
+create table Patients(--Таблиця усіх пацієнтів--
+                         hospitalID int references Hospitals(hospitalID), -- ID лікарні до якої прикріплений пацієнт 1:M--
+                         patientID int primary key, --Первинний ключ--
                          patientName varchar(100),
-                         phone varchar(20)
+                         phone varchar(20),
+                         constraint patients_phone unique (phone) --Обмеження телефон тільки унікальний--
 );
 
-create table Doctors(
-                        doctorID int primary key,
-                        hospitalID int references Hospitals(hospitalID),
-                        doctorName varchar(100),
+create table Doctors(--Таблиця усіх лікарів--
+                        doctorID int primary key, --Первинний ключ ID--
+                        hospitalID int references Hospitals(hospitalID),--Зовнішній ключ прив'язаний до локації лікарні 1:M--
+                        doctorName varchar(100) not null,--Не нуль ім'я--
                         phone varchar(20),
                         room int,
-                        speciality varchar(100)
+                        speciality varchar(100),
+                        constraint doctors_phone unique (phone), --Унікальний номер--
+                        constraint chk_doctors_room check (room>0)--Номер кімнати більший за нуль--
 );
 
-create table Appointments (
-                              appointmentID int primary key,
-                              patientID int references Patients(patientID),
-                              doctorID int references Doctors(doctorID),
-                              diagnosID int references Diagnosis(diagnosID),
-                              appointmentDate date
+create table Appointments (--Таблиця усіх записів--
+                              appointmentID int primary key,--Первинний ключ--
+                              patientID int references Patients(patientID), --Зв'язок 1:M--
+                              doctorID int references Doctors(doctorID),--Зв'язок 1:M--
+                              diagnosID int references Diagnosis(diagnosID),--Зв'язок 1:M--
+                              appointmentDate date not null --Дата не нуль--
 );
 
-create table Procedures(
+create table Procedures(--Таблиця усіх можливих процедур--
                            procedureID int primary key,
-                           appointmentID int references Appointments(appointmentID),
+                           appointmentID int references Appointments(appointmentID),--Зв'язок 1:M--
                            room int,
-                           price int
+                           price int not null,
+                           constraint chk_procedures_price check (price>=0),
+                           constraint chk_procedures_room check (room>0)
 );
 
-create table Pharmacy(
+create table Pharmacy(--Таблиця аптеки--
                          medicineID int primary key,
-                         hospitalID int references Hospitals(hospitalID),
-                         medicineName varchar(100),
-                         medicineAllowed boolean default true,
-                         price int,
-                         quantity int
+                         hospitalID int references Hospitals(hospitalID),--Зв'язок 1:M--
+                         medicineName varchar(100) not null,
+                         medicineAllowed boolean default true,--Початково правда--
+                         price int not null,
+                         quantity int default 0,--Початкова кількість 0--
+                         constraint chk_pharmacy_price check (price>0),
+                         constraint chk_pharmacy_quantity check (quantity>=0)
 );
 
-create table Admin(
+create table Admin(--Таблиця Адміна--
                       itemID int primary key,
-                      hospitalID int references Hospitals(hospitalID),
-                      itemName varchar(100),
-                      price int,
-                      quantity int
+                      hospitalID int references Hospitals(hospitalID),--Зв'язок 1:M--
+                      itemName varchar(100) not null,
+                      price int not null,
+                      quantity int default 0,
+                      constraint chk_admin_price check (price>=0),--Вартість більша рівна нулю--
+                      constraint chk_admin_quantity check (quantity>=0)--Обмеження кількість більша рівна нулю--
 );
+create table Appointment_Medicines(--Таблиця для призначення ліків на записі--
+	appointmentID int references Appointments(appointmentID),--Зв'язок M:M тут може бути декілька видів ліків за один прийом або один вид на декілька прийомів--
+	medicineID int references Pharmacy(medicineID),
+	quantity int default 1,
+	constraint chk_app_med check (quantity>0),
+	primary key (appointmentID, medicineID)
+);
+
 
 --Створення процедури для заповнення двох колонок таблиці
 create or replace procedure update_finance() --використано процедуру для коректного заповнення прибутку лікарень (при зміні даних можна викликати процедуру та значення оновляться)
@@ -97,4 +119,3 @@ call update_finance(); --виклик процедури
 create index if not exists idx_procedures_appointment on Procedures(appointmentID); --створюємо індекси на колонки, які використовуються в join для оптимізації
 create index if not exists idx_appointments_doctor on Appointments(doctorID);
 create index if not exists idx_doctors_hospital on Doctors(hospitalID);
-
