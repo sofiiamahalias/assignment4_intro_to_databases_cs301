@@ -10,7 +10,7 @@ grant usage on schema public to AdminHosp;
 grant usage on schema public to financialDirector;
 grant usage on schema public to Doctor;
 
-grant select, insert, update on Appointments, Patients, Procedures, Appointemnt_Medicines to Doctor;
+grant select, insert, update on Appointments, Patients, Procedures, Appointment_Medicines to Doctor;
 grant select on Doctors, Diagnosis, Pharmacy to Doctor;
 
 grant all privileges on all tables in schema public to AdminHosp;
