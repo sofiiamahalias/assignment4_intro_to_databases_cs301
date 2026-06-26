@@ -119,3 +119,13 @@ call update_finance(); --виклик процедури
 create index if not exists idx_procedures_appointment on Procedures(appointmentID); --створюємо індекси на колонки, які використовуються в join для оптимізації
 create index if not exists idx_appointments_doctor on Appointments(doctorID);
 create index if not exists idx_doctors_hospital on Doctors(hospitalID);
+--Тестування індексів (оскільки вони були створені для колонок з join, використовую саме цю частину процедури (обчислення прибутку) для перевірки ефективності)
+explain analyze
+select coalesce(sum(pr.price), 0)
+from Procedures pr
+join Appointments a on pr.appointmentID = a.appointmentID
+join Doctors d on a.doctorID = d.doctorID
+where d.hospitalID = 1;
+--Отримала такі результати 
+--Без індексів: Planning Time: 13.122 ms        Execution Time: 183.821 ms  
+--З трьома індексами: Planning Time: 3.960 ms    Execution Time: 83.672 ms
