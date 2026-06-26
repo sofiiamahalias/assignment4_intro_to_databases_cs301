@@ -259,7 +259,30 @@ for start in range(1,100001,batch_size):
     insert_batch(conn,q,data)
     print(f"pharmacy: {end-1}")
 ```
+def generate_appointment_medicines(conn):
+    q = """
+    insert into appointment_medicines
+    (appointmentid, medicineid, quantity)
+    values (%s,%s,%s)
+    """
 
+    for start in range(1, 500001, batch_size):
+        data = []
+        end = min(start + batch_size, 500001)
+
+        for appointment_id in range(start, end):
+            medicines = random.sample(range(1, 100001), random.randint(1, 5))
+
+            for medicine_id in medicines:
+                data.append((
+                    appointment_id,
+                    medicine_id,
+                    random.randint(1, 5)
+                ))
+
+        insert_batch(conn, q, data)
+        print(f"appointment_medicines: {end-1}")
+        
 def generate_admin(conn):
 q="""
 insert into admin
@@ -313,6 +336,7 @@ generate_patients(conn)
 generate_appointments(conn)
 generate_procedures(conn)
 generate_pharmacy(conn)
+generate_appointment_medicines(conn)
 generate_admin(conn)
 
 conn.close()
