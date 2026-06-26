@@ -6,6 +6,7 @@ create table Hospitals( --Таблиця всіх лікарень--
                           constraint chk_hospital_rating check (rating>=0.0 and rating<=5.0) --Обмеження рейтинг від 0.0 до 5.0--
 );
 
+
 create table Diagnosis (--таблиця з діагнозами--
                            diagnosID int primary key, --Первинний ключ по діагноз ID--
                            diagnos varchar(100) not null,
